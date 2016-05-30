@@ -25,7 +25,11 @@ module.exports = function (app, passport) {
 	});
 
 	// Process the Sign Up form
-	// app.post('/signup', do all out passport stuff here);
+	app.post('/signup', passport.authenticate('local-signup', {
+		successRedirect: '/profile', // Redirect back to secure profile section
+		failureRedirect: '/signup', // Redirect back to signup page if there is an error
+		failureFlash: true // Allow flash messages
+	}));
 
 	// =======
 	// PROFILE SECTION ====

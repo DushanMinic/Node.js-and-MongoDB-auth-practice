@@ -2,7 +2,7 @@
 var LocalStrategy = require('passport-local').Strategy;
 
 // Load up the User model
-var User = require('./app/user');
+var User = require('../app/user');
 
 // Expose this function to our app
 module.exports = function(passport) {
@@ -39,7 +39,7 @@ module.exports = function(passport) {
 	function (req, email, password, done) {
 		// Asynchronous
 		// User.findOne won't fire unless data is sent back
-		process.nextThick(function () {
+		
 
 			// Find user whose email is the same as forms email
 			// We are checking to see if the user is trying to login already
@@ -68,8 +68,9 @@ module.exports = function(passport) {
 					});
 
 				}
+
 			});
-		});
+		
 	}
 	));
 };

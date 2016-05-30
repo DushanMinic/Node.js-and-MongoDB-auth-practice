@@ -13,8 +13,9 @@ var session = require('express-session');
 var configDB = require('./config/database.js');
 
 // Configuration ==========
+mongoose.connect(configDB.url);
 
-// require('./config/passport')(passport); // pass passport for configuration
+ require('./config/passport')(passport); // pass passport for configuration
 
 // Set up Express Application
 
@@ -26,7 +27,7 @@ app.set('view engine', 'ejs'); // Set EJS as Template Engine
 
 // Required for Passport
 
-app.use(session({ secret: 'dusanminicnodejs' }));
+app.use(session({ secret: 'dusanminicnodejs', resave: true, saveUninitialized: true }));
 app.use(passport.initialize());
 app.use(passport.session()); // Persistent Log In Sessions
 app.use(flash()); // Use connect-flash for flash messages stored in session
