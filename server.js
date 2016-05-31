@@ -13,9 +13,9 @@ var session = require('express-session');
 var configDB = require('./config/database.js');
 
 // Configuration ==========
-mongoose.connect(configDB.url);
+mongoose.connect(configDB.url); // Connect to our database
 
- require('./config/passport')(passport); // pass passport for configuration
+require('./config/passport')(passport); // Pass passport for configuration
 
 // Set up Express Application
 
@@ -34,11 +34,6 @@ app.use(flash()); // Use connect-flash for flash messages stored in session
 
 // Routes ==========
 
-// I think this means that module.exports in your
-//  ./app/routes module is not assigned to be a function so
-//   therefore require('./app/routes') does not resolve to a 
-//   function so therefore, you cannot call it as a function like this require('./app/routes')(app, passport).
-// Show us ./app/routes if you want us to comment further on that.
 
 require('./app/routes.js')(app, passport); // Load routes and pass in our app fully configured passport
 
