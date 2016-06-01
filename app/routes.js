@@ -42,15 +42,26 @@ module.exports = function (app, passport) {
 	// We will use route middleware to verify this (the isLoggedIn function)
 	app.get('/profile', isLoggedIn, function (req, res) {
 		res.render('profile.ejs', {
-			user: req.user // Get the user out of session and pass it to template
+			user: req.user, // Get the user out of session and pass it to template
+			// picture: 'https://graph.facebook.com/' + req.user.facebook.id + '/picture?height=350&width=250'
 		});
 	});
+
+	// == TWITTER ROUTES
+	// ====
+	app.get('/auth/twitter', passport.authenticate('twitter'));
+
+	// Handle the callback after Twitter has authenticated the user
+	app.get('/auth/twitter/callback', passport.authenticate('twitter', {
+		successRedirect : '/profile',
+		failureRedirect : '/'
+	}));
 
 	//============================
 	// ===== FACEBOOK ROUTES =====
 
 	// Route for FB authentication and login
-	app.get('/auth/facebook', passport.authenticate('facebook', {scope : 'email' }));
+	app.get('/auth/facebook', passport.authenticate('facebook', {scope : ['email'] }));
 
 	// Handle the callback after facebook has authenticated the user
 	app.get('/auth/facebook/callback', 

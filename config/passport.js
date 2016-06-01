@@ -1,6 +1,8 @@
 // Load all the things we need
 var LocalStrategy = require('passport-local').Strategy;
 var FacebookStrategy = require('passport-facebook').Strategy;
+var TwitterStrategy = require('passport-twitter').Strategy;
+var GoogleStrategy = require('passport-google-oauth').Strategy;
 
 // Load up the User model
 var User = require('../app/user');
@@ -29,6 +31,53 @@ module.exports = function(passport) {
 		});
 	});
 
+
+	
+
+
+	// ===========
+	// TWITTER =====
+
+	passport.use(new TwitterStrategy({
+		consumerKey : configAuth.twitterAuth.consumerKey,
+		consumerSecret : configAuth.twitterAuth.consumerSecret,
+		callbackURL : configAuth.twitterAuth.callbackURL
+	},
+	function(token, tokenSecret, profile, done) {
+		// Asynchronous
+		process.nextTick(function () {
+			User.findOne({ 'twitter.id' : profile.id }, function(err, user) {
+				if(err)
+				return done(err);
+
+			// If the user is found, log it in
+			if(user) {
+				return done(null, user);
+			} else {
+				// If there is no user, create it
+				var newUser = new User();
+
+				// Set all the data
+				newUser.twitter.id = profile.id;
+				newUser.twitter.token = token;
+				newUser.twitter.username = profile.username;
+				newUser.twitter.displayName = profile.displayName;
+
+				// Save the user in database
+				newUser.save(function (err) {
+					if(err)
+						throw err;
+					return done(null, newUser);
+				});
+
+			}
+			});
+
+		});
+	}
+
+	));
+
 	//==== FACEBOOK =====
 
 	passport.use(new FacebookStrategy({
@@ -36,7 +85,7 @@ module.exports = function(passport) {
 		clientID : configAuth.facebookAuth.clientID,
 		clientSecret : configAuth.facebookAuth.clientSecret,
 		callbackURL : configAuth.facebookAuth.callbackURL,
-		profileFields : ["emails", "displayName"]
+		profileFields : ["emails", "displayName", "picture.type(large)"]
 },
 		// Facebook will send back the token and profile
 		function(token, refreshToken, profile, done) {
@@ -63,6 +112,7 @@ module.exports = function(passport) {
 						newUser.facebook.token = token; // Saving the token that FB provides to User
 						newUser.facebook.name = profile.displayName; // Passport Facebook User profile
 						newUser.facebook.email = profile.emails[0].value; // Facebook can return multiple emails, returning first here
+
 
 						// Save the user to database 
 						newUser.save(function (err) {
