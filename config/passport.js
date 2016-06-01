@@ -1,8 +1,12 @@
 // Load all the things we need
 var LocalStrategy = require('passport-local').Strategy;
+var FacebookStrategy = require('passport-facebook').Strategy;
 
 // Load up the User model
 var User = require('../app/user');
+
+// Load the Auth variables
+var configAuth = require('./auth');
 
 // Expose this function to our app
 module.exports = function(passport) {
@@ -24,6 +28,56 @@ module.exports = function(passport) {
 			done(err, user);
 		});
 	});
+
+	//==== FACEBOOK =====
+
+	passport.use(new FacebookStrategy({
+		// Pull in App ID and App Secret from auth.js file
+		clientID : configAuth.facebookAuth.clientID,
+		clientSecret : configAuth.facebookAuth.clientSecret,
+		callbackURL : configAuth.facebookAuth.callbackURL,
+		profileFields : ["emails", "displayName"]
+},
+		// Facebook will send back the token and profile
+		function(token, refreshToken, profile, done) {
+			// Asynchronous
+			process.nextTick(function () {
+
+				// Find the user in the database based on their Facebook ID
+				User.findOne({ 'facebook.id' : profile.id }, function (err, user) {
+					// If there is an error, stop everything and return error
+					if (err)
+						return done(err);
+
+					// If the user is found, log him in
+					if(user) {
+						return done(null, user); // User found, return that user
+					} else {
+
+						//If there is no User, create it
+
+						var newUser = new User ();
+
+						// Set all of the Facebook information in User model
+						newUser.facebook.id = profile.id; // Set the User's Facebook ID
+						newUser.facebook.token = token; // Saving the token that FB provides to User
+						newUser.facebook.name = profile.displayName; // Passport Facebook User profile
+						newUser.facebook.email = profile.emails[0].value; // Facebook can return multiple emails, returning first here
+
+						// Save the user to database 
+						newUser.save(function (err) {
+							if(err)
+								throw err;
+
+							// If successful, return the new User
+							return done(null, newUser);
+						});
+					}
+
+				});
+			});
+
+	}));
 
 	// ====
 	// LOCAL SIGN UP ====
