@@ -38,10 +38,13 @@ module.exports = function(passport) {
 	passport.use(new GoogleStrategy({
 		clientID: configAuth.googleAuth.clientID,
 		clientSecret : configAuth.googleAuth.clientSecret,
-		callbackURL : configAuth.googleAuth.callbackURL
+		callbackURL : configAuth.googleAuth.callbackURL,
+		passReqToCallback: true
 	},
-		function(token, refreshToken, profile, done) {
+		function(req, token, refreshToken, profile, done) {
 			process.nextTick(function () {
+
+				if(!req.user) {
 
 				// Finding user based on their Google ID
 				User.findOne({ 'google.id' : profile.id }, function (err, user) {
@@ -49,6 +52,19 @@ module.exports = function(passport) {
 						return done(err);
 
 					if(user) {
+
+						if(!user.google.token) {
+							user.google.token = token;
+							user.google.name = profile.displayName;
+							user.google.email = profile.emails[0].value;
+
+							user.save(function(err) {
+								if(err)
+									throw err;
+								return done(null, user);
+							});
+						}
+
 						// If user is found
 						return done(null, user);
 					} else {
@@ -68,6 +84,26 @@ module.exports = function(passport) {
 					}
 
 				});
+			} else {
+
+				var user = req.user;
+
+				user.google.id = profile.id;
+				user.google.token = token;
+				user.google.name = profile.displayName;
+				user.google.email = profile.emails[0].value;
+
+				user.save(function(err) {
+					if(err)
+						throw err;
+
+					return done(null, user);
+				});
+
+
+			}
+
+
 
 			});
 		}
@@ -81,18 +117,32 @@ module.exports = function(passport) {
 	passport.use(new TwitterStrategy({
 		consumerKey : configAuth.twitterAuth.consumerKey,
 		consumerSecret : configAuth.twitterAuth.consumerSecret,
-		callbackURL : configAuth.twitterAuth.callbackURL
+		callbackURL : configAuth.twitterAuth.callbackURL,
+		passReqToCallback: true
 	},
-	function(token, tokenSecret, profile, done) {
+	function(req, token, tokenSecret, profile, done) {
 		// Asynchronous
 		process.nextTick(function () {
-			
+			if(!req.user) {
 			User.findOne({ 'twitter.id' : profile.id }, function(err, user) {
 				if(err)
 				return done(err);
 
 			// If the user is found, log it in
 			if(user) {
+
+				if(!user.twitter.token) {
+					user.twitter.token = token;
+					user.twitter.username = profile.username;
+					user.twitter.displayName = profile.displayName;
+
+					user.save(function(err){
+						if(err)
+							throw err;
+						return done(null, user);
+					});
+				}
+
 				return done(null, user);
 			} else {
 				// If there is no user, create it
@@ -113,6 +163,21 @@ module.exports = function(passport) {
 
 			}
 			});
+	} else {
+		var user = req.user;
+
+		user.twitter.id = profile.id;
+		user.twitter.token = token;
+		user.twitter.username = profile.username;
+		user.twitter.displayName = profile.displayName;
+
+		user.save(function(err) {
+			if(err)
+				throw err;
+			return done(null, user);
+		});
+	}
+
 
 		});
 	}
