@@ -82,18 +82,101 @@ module.exports = function (app, passport) {
 			failureRedirect : '/'
 		}));
 
+// =============================================================================
+// AUTHORIZE (ALREADY LOGGED IN / CONNECTING OTHER SOCIAL ACCOUNT) =============
+// =============================================================================
 
+// LOCALLY
+app.get('/connect/local', function(req, res) {
+	res.render('connect-local.ejs', { message: req.flash('loginMessage') })
+});
+
+app.post('/connect/local', passport.authenticate('local-signup', {
+	successRedirect: '/profile',
+	failureRedirect: '/connect/local',
+	failureFlash: true
+}));
+
+// FACEBOOK
+// Send to Facebook to do the authentication
+app.get('/connect/facebook', passport.authorize('facebook', { scope : 'email' }));
+
+// Handle the callback after FB has authorized
+app.get('/connect/facebook/callback', passport.authorize('facebook', {
+	successRedirect: '/profile',
+	failureRedirect: '/'
+}));
+
+// TWITTER
+app.get('/connect/twitter', passport.authorize('twitter', { scope : 'email' }));
+
+app.get('/connect/twitter/callback', passport.authorize('twitter', {
+	successRedirect: '/profile',
+	failureRedirect: '/'
+}));
+
+// GOOGLE
+app.get('/connect/google', passport.authorize('google', { scope : ['profile', 'email'] }));
+
+app.get('/connect/google/callback', passport.authorize('google', {
+	successRedirect: '/profile',
+	failureRedirect: '/'
+}));
+
+
+// ====== UNLINK ACCOUNTS =========
+
+// LOCAL
+app.get('/unlink/local', function(req, res) {
+
+	var user = req.user;
+	user.local.email = undefined;
+	user.local.password = undefined;
+	user.save(function(err) {
+		res.redirect('/profile');
+	});
+});
+
+// FACEBOOK
+app.get('/unlink/facebook', function(req, res) {
+	
+	var user = req.user;
+	user.facebook.token = undefined;
+	user.save(function(err){
+		res.redirect('/profile');
+	});
+});
+
+// GOOGLE
+app.get('/unlink/google', function(req, res) {
+	
+	var user = req.user;
+	user.google.token = undefined;
+	user.save(function(err){
+		res.redirect('/profile');
+	});
+});
+
+// TWITTER
+app.get('/unlink/twitter', function(req, res) {
+	
+	var user = req.user;
+	user.twitter.token = undefined;
+	user.save(function(err){
+		res.redirect('/profile');
+	});
+});
 
 
 	// =========
 	// LOGOUT =====
 	//=====
 	app.get('/logout', function (req, res) {
-		// req.logout();
-		// res.redirect('/');
-		req.session.destroy(function (err) {
-			res.redirect('/');
-		});
+		req.logout();
+		res.redirect('/');
+		// req.session.destroy(function (err) {
+		// 	res.redirect('/');
+		// });
 	});
 
 };

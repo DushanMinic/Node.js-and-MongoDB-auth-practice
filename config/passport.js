@@ -86,6 +86,7 @@ module.exports = function(passport) {
 	function(token, tokenSecret, profile, done) {
 		// Asynchronous
 		process.nextTick(function () {
+			
 			User.findOne({ 'twitter.id' : profile.id }, function(err, user) {
 				if(err)
 				return done(err);
@@ -125,12 +126,16 @@ module.exports = function(passport) {
 		clientID : configAuth.facebookAuth.clientID,
 		clientSecret : configAuth.facebookAuth.clientSecret,
 		callbackURL : configAuth.facebookAuth.callbackURL,
-		profileFields : ["emails", "displayName", "picture.type(large)"]
+		profileFields : ["emails", "displayName", "picture.type(large)"],
+		passReqToCallback : true // Allows us to pass in the req from our route (lets us check if a user is logged in or not)
 },
 		// Facebook will send back the token and profile
-		function(token, refreshToken, profile, done) {
+		function(req, token, refreshToken, profile, done) {
 			// Asynchronous
 			process.nextTick(function () {
+
+				// Check if the user is logged in
+				if(!req.user) {
 
 				// Find the user in the database based on their Facebook ID
 				User.findOne({ 'facebook.id' : profile.id }, function (err, user) {
@@ -140,6 +145,21 @@ module.exports = function(passport) {
 
 					// If the user is found, log him in
 					if(user) {
+
+						// If there is a user id already but no token (user was linked at one point and then removed)
+                        // Just add our token and profile information
+                        if(!user.facebook.token) {
+                        	user.facebook.token = token;
+                        	user.facebook.name = profile.displayName;
+                        	user.facebook.email = profile.emails[0].value;
+
+                        	user.save(function(err) {
+                        		if(err)
+                        			throw err;
+                        		return done(null, user);
+                        	});
+                        }
+
 						return done(null, user); // User found, return that user
 					} else {
 
@@ -165,6 +185,27 @@ module.exports = function(passport) {
 					}
 
 				});
+
+			} else {
+				// User exists and is logged in, link accounts
+				var user = req.user; // Pull the user out of the session
+
+				// Update the current Facebook credentials
+				user.facebook.id = profile.id;
+				user.facebook.token = token;
+				user.facebook.name = profile.displayName;
+				user.facebook.email = profile.emails[0].value;
+
+				// Saving the user
+				user.save(function (err) {
+					if(err) 
+						throw err;
+
+					return done(null, user);
+				});
+
+			}
+
 			});
 
 	}));
