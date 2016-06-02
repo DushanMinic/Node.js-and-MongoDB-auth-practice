@@ -18,6 +18,21 @@
 
 		<div class='row'>
 
+			<!-- GOOGLE INFORMATION -->
+			<div class='col-sm6'>
+				<div class="well">
+					<h3 class='text-danger'><span class='fa fa-google-plus'></span> Google</h3>
+
+					<p>
+						<strong>id</strong>: <%= user.google.id %><br>
+						<strong>token</strong>:	<%= user.google.token %><br>
+						<strong>email</strong>: <%= user.google.email %><br>
+						<strong>name</strong>:  <%= user.google.name %>
+					</p>
+
+				</div>
+			</div>
+
 			<!-- TWITTER INFORMATION -->
 			<div class='col-sm6'>
 				<div class='well'>
@@ -27,7 +42,7 @@
 						<strong>id</strong>: <%= user.twitter.id %><br>
 						<strong>token</strong>: <%= user.twitter.token %><br>
 						<strong>username</strong>: <%= user.twitter.username %><br>
-						<strong>displayName</strong>: <%= user.twitter.displayName %><br>
+						<strong>displayName</strong>: <%= user.twitter.displayName %>
 					</p>
 
 				</div>
@@ -42,7 +57,7 @@
 						<strong>id</strong>: <%= user.facebook.id %><br>
 						<strong>token</strong>: <%= user.facebook.token %><br>
 						<strong>email</strong>: <%= user.facebook.email %> <br>
-						<strong>name</strong>: <%= user.facebook.name %><br>
+						<strong>name</strong>: <%= user.facebook.name %>
 						
 					</p>
 				</div>
